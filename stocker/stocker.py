@@ -10,7 +10,6 @@ mpl.rc('figure',facecolor='white')
 import matplotlib.pyplot as plt
 import sys
 import numpy as np
-import timecon as tc
 from datetime import datetime as dt
 
 #----- class declarations -----#
@@ -55,20 +54,29 @@ def retrieve_data(sym):
 	
 
 def main():
+
+	#sym = raw_input('Enter ticker symbol: ').upper()
 	
-	sym = raw_input('Enter ticker symbol: ').upper()
+	#csv_data = retrieve_data(sym)
 	
-	csv_data = retrieve_data(sym)
+	sym='TMO'
+	with open('../r','r') as f:
+		csv_data = f.read()
+	
 	
 	a = np.array([x.split(',') for x in csv_data.split('\n') if x])
 	
 	symbols[sym] = book(a)
 	
-	
+	fig = plt.figure()
+	ax = fig.add_subplot(111)
 	plt.scatter(
-		range(len(symbols[sym].open)),	#x values
-		symbols[sym].open,				#y values	
+		range( len(symbols[sym].open) ),	#x values
+		symbols[sym].open,					#y values
+			
 	)
+	ax.set_title('yes')
+	plt.tight_layout()
 	plt.show()
 	
 	
