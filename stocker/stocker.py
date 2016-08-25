@@ -8,9 +8,13 @@ import matplotlib as mpl
 mpl.use('TkAgg')
 mpl.rc('figure',facecolor='white')
 import matplotlib.pyplot as plt
+from pylab import rcParams
+rcParams['figure.figsize'] = 12,8
+
 import sys
 import numpy as np
 from datetime import datetime as dt
+
 
 #----- class declarations -----#
 
@@ -40,6 +44,7 @@ class book():
 def exit():
 	print; print 'Exiting...'; print; sys.exit()
 
+
 def retrieve_data(sym):
 	url = 'http://chart.finance.yahoo.com/table.csv?s=%s&amp;a=3&amp;b=1&amp;c=2010&amp;d=3&amp;e=1&amp;f=2020&amp;g=d&amp;ignore=.csv'%sym
 	r = requests.get(url)
@@ -51,40 +56,68 @@ def retrieve_data(sym):
 		exit()
 	return r.text
 
+
+def plot_data(symbols,sym,option):
+
+	fig = plt.figure()
+	ax = fig.add_subplot(111)
+	
+	plt.scatter(
+		range( len( getattr(symbols[sym],option) ) ),	#x values
+		getattr(symbols[sym],option),					#y values
+			
+	)
+	
+	ax.set_title(sym)
+	ax.set_xlabel('time')
+	ax.set_ylabel(option)
+	#ax.set_axis_bgcolor('black')
+	plt.tight_layout()
+	
+	plt.show()	
+
+
+def get_option(options):
+	print 'Select from data options by number: '
+
+	while 1:	
+		for i in range(len(options)):
+			print ' ',i,options[i]
+			
+		op = raw_input('Option: ')	
+		
+		try:
+			op = int(op)
+			if op in range(len(options)):
+				return options[op]
+		except:
+			print 'Invalid option.'
 	
 
 def main():
+	print '#----- stocker.py -----#'
+	
+	
+	sym = raw_input('Enter ticker symbol: ').upper()
+	csv_data = retrieve_data(sym)
 
-	#sym = raw_input('Enter ticker symbol: ').upper()
-	
-	#csv_data = retrieve_data(sym)
-	
-	sym='TMO'
-	with open('../r','r') as f:
-		csv_data = f.read()
-	
 	
 	a = np.array([x.split(',') for x in csv_data.split('\n') if x])
-	
 	symbols[sym] = book(a)
 	
-	fig = plt.figure()
-	ax = fig.add_subplot(111)
-	plt.scatter(
-		range( len(symbols[sym].open) ),	#x values
-		symbols[sym].open,					#y values
-			
-	)
-	ax.set_title('yes')
-	plt.tight_layout()
-	plt.show()
+	
+	options = [x.lower().replace(' ','_') for x in a[0][1:]]
+	op = get_option(options)
+	
+	
+	date1,date2 = a[1][0],a[-1][0]
+	
+	
+	plot_data(symbols,sym,op)
 	
 	
 	
-	
-	
-	
-	
+
 	
 if __name__ == '__main__':
 	main()
