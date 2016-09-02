@@ -2,18 +2,25 @@
 '''
 Retrieve and plot historical data for user-selected ticker symbols
 '''
+import os
+import sys
+import subprocess as sp
+from datetime import datetime as dt
 
 import requests
+import numpy as np
+
 import matplotlib as mpl
 mpl.use('TkAgg')
 mpl.rc('figure',facecolor='white')
+
 import matplotlib.pyplot as plt
 from pylab import rcParams
 rcParams['figure.figsize'] = 12,8
 
-import sys
-import numpy as np
-from datetime import datetime as dt
+
+
+
 
 
 #----- class declarations -----#
@@ -23,6 +30,7 @@ symbols = {}
 class book():	
 	def __init__(self,data):
 		attrs = [x.replace(' ','_').lower() for x in data[0]]
+		#print attrs
 		for i in range(len(attrs)):
 			setattr(
 				self,
@@ -57,27 +65,47 @@ def retrieve_data(sym):
 	return r.text
 
 
-def plot_data(symbols,sym,option):
-
+def plot_data(symbols,sym,y_vals,**daterange):
+	
 	fig = plt.figure()
 	ax = fig.add_subplot(111)
 	
 	plt.scatter(
-		range( len( getattr(symbols[sym],option) ) ),	#x values
-		getattr(symbols[sym],option),					#y values
+		range( len( getattr(symbols[sym],y_vals) ) ),	#x values
+		getattr(symbols[sym],y_vals),					#y values
 			
 	)
 	
 	ax.set_title(sym)
 	ax.set_xlabel('time')
-	ax.set_ylabel(option)
+	ax.set_ylabel(y_vals)
 	#ax.set_axis_bgcolor('black')
+	
+	#label points
+	entries = len(symbols[sym].date)
+	
+	num_labels = 20
+	n=entries/num_labels
+	
+	
+	dates = []
+	for p in range(entries):
+		if p % entries/num_labels == 0:
+			date = getattr(symbols[sym],'date')[p*n].split('-')
+			date = '-'.join([date[1],date[2],date[0][2:]])
+			dates.append(date)
+	
+	ax.set_xticks(np.linspace(0,entries,num_labels))
+	ax.set_xticklabels(dates,rotation=-45,ha='left',minor=False)
+			
+	
 	plt.tight_layout()
 	
 	plt.show()	
 
 
-def get_option(options):
+def get_option(a):
+	options = [x.lower().replace(' ','_') for x in a[0][1:]]
 	print 'Select from data options by number: '
 
 	while 1:	
@@ -92,32 +120,52 @@ def get_option(options):
 				return options[op]
 		except:
 			print 'Invalid option.'
-	
+
+
+def get_prefs():
+	if not os.path.exists('prefs'):
+		open('prefs','w').write('')
+		return None
+	return open('prefs','r').read()		
+
+
+def save_data(sym,csv_data,a):
+	date2 = a[1][0]
+	date1 = a[-1][0]
+	filepath = './data/%s_%s_-_%s'%(sym,date1,date2)
+	if not os.path.exists(filepath):
+		with open(filepath,'w') as f:
+			f.write(csv_data)
+
 
 def main():
 	print '#----- stocker.py -----#'
-	
-	
+		
 	sym = raw_input('Enter ticker symbol: ').upper()
 	csv_data = retrieve_data(sym)
-
 	
+		
 	a = np.array([x.split(',') for x in csv_data.split('\n') if x])
+	
 	symbols[sym] = book(a)
 	
+	#y_vals = get_option(a)
+	y_vals = 'high'
 	
-	options = [x.lower().replace(' ','_') for x in a[0][1:]]
-	op = get_option(options)
+	prefs = get_prefs()
 	
+	save_data(sym,csv_data,a)
 	
-	date1,date2 = a[1][0],a[-1][0]
-	
-	
-	plot_data(symbols,sym,op)
-	
+	plot_data(symbols,sym,y_vals,date_range='all')
 	
 	
-
+	
+	
+	
+	
+	
+	
+	
 	
 if __name__ == '__main__':
 	main()
